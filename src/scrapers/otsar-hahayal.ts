@@ -11,6 +11,7 @@ import {
 } from '../helpers/elements-interactions';
 import { SHEKEL_CURRENCY, SHEKEL_CURRENCY_SYMBOL } from '../constants';
 import { Transaction, TransactionStatuses, TransactionTypes } from '../transactions';
+import { escapeRegExp } from '../helpers/strings';
 
 const BASE_URL = 'https://online.bankotsar.co.il';
 const LONG_DATE_FORMAT = 'DD/MM/YYYY';
@@ -29,7 +30,7 @@ interface ScrapedTransaction {
 
 function getPossibleLoginResults(page: Page) {
   const urls: PossibleLoginResults = {};
-  urls[LoginResults.Success] = [`${BASE_URL}/wps/myportal/FibiMenu/Online`];
+  urls[LoginResults.Success] = [new RegExp(`^${escapeRegExp(`${BASE_URL}/wps/myportal/FibiMenu/Online`)}`)];
   urls[LoginResults.InvalidPassword] = [() => elementPresentOnPage(page, '#validationMsg')];
   // TODO: support change password
   /* urls[LOGIN_RESULT.CHANGE_PASSWORD] = [``]; */
@@ -152,7 +153,7 @@ async function fetchTransactionsForAccount(page: Page, startDate: Moment) {
     startDate.format('DD/MM/YYYY'),
   );
 
-  await clickButton(page, '#fibi_tab_dates .fibi_btn:nth-child(2)');
+  await clickButton(page, '#fibi_dates + input');
   await waitForNavigation(page);
   await waitUntilElementFound(page, 'table#dataTable077, #NO_DATA077');
   let hasNextPage = true;
@@ -193,7 +194,6 @@ async function waitForPostLogin(page: Page) {
   // TODO check for condition to provide new password
   return Promise.race([
     waitUntilElementFound(page, 'div.lotusFrame', true),
-    waitUntilElementFound(page, '#validationMsg'),
   ]);
 }
 
